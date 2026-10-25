@@ -17,7 +17,8 @@ class UpdateChecker(
     private val context: Context,
     private val api: GitHubApi = GitHubApi(),
 ) {
-    suspend fun check(repo: TrackedRepo, token: String): AppUpdateState {
+    /** [token] is optional -- null works fine for a public repo, see [GitHubApi]. */
+    suspend fun check(repo: TrackedRepo, token: String?): AppUpdateState {
         val installed = installedVersion(repo.applicationId)
 
         val release = try {

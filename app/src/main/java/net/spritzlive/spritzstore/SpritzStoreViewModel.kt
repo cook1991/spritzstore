@@ -39,11 +39,9 @@ class SpritzStoreViewModel(application: Application) : AndroidViewModel(applicat
             val repos = prefs.trackedRepos()
             _rows.value = repos.map { AppRow(it, AppUpdateState.Checking) }
 
-            if (token == null) {
-                _rows.value = repos.map { AppRow(it, AppUpdateState.Error("No GitHub token set -- add one in Settings")) }
-                return@launch
-            }
-
+            // No blanket bail-out on a missing token: a public repo (one shared by
+            // someone other than its owner) checks fine with none. A repo that
+            // actually needs a token to be seen just surfaces its own 401/404 below.
             for (repo in repos) {
                 val state = withContext(Dispatchers.IO) { checker.check(repo, token) }
                 _rows.value = _rows.value.map { if (it.repo.slug == repo.slug) AppRow(repo, state) else it }

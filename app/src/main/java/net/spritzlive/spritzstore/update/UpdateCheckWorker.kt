@@ -16,7 +16,9 @@ class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineW
 
     override suspend fun doWork(): Result {
         val prefs = SpritzStorePrefs(applicationContext)
-        val token = prefs.githubToken() ?: return Result.success() // nothing to check without a token
+        // No token is fine -- public repos (e.g. ones shared with someone who isn't the
+        // repo owner) still check correctly with no Authorization header at all.
+        val token = prefs.githubToken()
         val checker = UpdateChecker(applicationContext)
 
         for (repo in prefs.trackedRepos()) {

@@ -50,11 +50,14 @@ fun SettingsScreen(viewModel: SpritzStoreViewModel, onBack: () -> Unit) {
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-            Text("GitHub token")
+            Text("GitHub token (optional)")
             Text(
-                "Fine-grained PAT, read-only Contents, scoped to just the tracked repos. " +
-                    "90-day max expiry on GitHub's side -- you'll need to come back and " +
-                    "paste a new one periodically.",
+                "Only needed to track a private repo -- a fine-grained PAT, read-only " +
+                    "Contents, scoped to just the repos you track. Public repos (shared " +
+                    "apps from someone else) work with no token at all; skip this if " +
+                    "everything you're tracking is public. A saved token has a 90-day " +
+                    "max expiry on GitHub's side -- you'll need to come back and paste " +
+                    "a new one periodically.",
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(if (hasToken) "Current status: token saved" else "Current status: no token saved")
