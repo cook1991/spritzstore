@@ -15,6 +15,17 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Without this, Android 11+ package-visibility filtering hides every OTHER app's
+         install status from getPackageInfo(); SpritzStore would see itself fine (self-
+         visibility is always granted) but every tracked sibling app would look
+         permanently "not installed" even when it's genuinely there. A static <queries>
+         list naming each sibling's applicationId was the alternative, but the tracked-
+         repo list is user-editable at runtime (Settings -> add repo), so a build-time
+         list would silently drift out of sync. QUERY_ALL_PACKAGES is a normal (non-
+         dangerous, no prompt) permission; its Play Store review restriction doesn't
+         apply here since this app is never distributed through Play Store. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
     <application
         android:name=".SpritzStoreApp"
         android:allowBackup="false"
