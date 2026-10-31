@@ -46,4 +46,10 @@ val DEFAULT_TRACKED_REPOS = listOf(
     TrackedRepo("cook1991", "policescanner", "net.inetvisions.policescanner"),
     TrackedRepo("cook1991", "identifysongapp", "net.spritzlive.identifysong"),
     TrackedRepo("cook1991", "satellitephoneapp", "com.satphone"),
+    // Public repo (unlike the rest of this list) -- no PAT needed to check/download
+    // it specifically, since it's meant to be installed by Eric too, not just Jason.
+    // Eric's phone should have the other, private entries above pruned out via
+    // Settings -> Tracked apps (no token on his install -> those would just show
+    // failed checks), keeping this one.
+    TrackedRepo("cook1991", "securemessenger", "net.spritzlive.securemessenger"),
 )
