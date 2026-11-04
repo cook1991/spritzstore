@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.spritzlive.spritzstore.data.SpritzStorePrefs
 import net.spritzlive.spritzstore.install.ApkInstaller
+import net.spritzlive.spritzstore.install.InstallResultBus
 import net.spritzlive.spritzstore.model.AppRow
 import net.spritzlive.spritzstore.model.AppUpdateState
 import net.spritzlive.spritzstore.model.TrackedRepo
@@ -29,6 +30,19 @@ class SpritzStoreViewModel(application: Application) : AndroidViewModel(applicat
 
     init {
         refresh()
+        viewModelScope.launch {
+            InstallResultBus.results.collect { outcome ->
+                val row = _rows.value.find { it.repo.applicationId == outcome.applicationId } ?: return@collect
+                if (outcome.success) {
+                    val token = prefs.githubToken()
+                    val state = withContext(Dispatchers.IO) { checker.check(row.repo, token) }
+                    _rows.value = _rows.value.map { if (it.repo.slug == row.repo.slug) AppRow(row.repo, state) else it }
+                } else {
+                    val failure = AppUpdateState.Error(outcome.detail ?: "Install failed")
+                    _rows.value = _rows.value.map { if (it.repo.slug == row.repo.slug) AppRow(row.repo, failure) else it }
+                }
+            }
+        }
     }
 
     fun refresh() {

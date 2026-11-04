@@ -28,9 +28,11 @@ class InstallResultReceiver : BroadcastReceiver() {
             }
             PackageInstaller.STATUS_SUCCESS -> {
                 Notifications.notifyInstallResult(context, applicationId.hashCode(), applicationId, success = true, detail = null)
+                InstallResultBus.post(InstallOutcome(applicationId, success = true, detail = null))
             }
             else -> {
                 Notifications.notifyInstallResult(context, applicationId.hashCode(), applicationId, success = false, detail = message)
+                InstallResultBus.post(InstallOutcome(applicationId, success = false, detail = message))
             }
         }
     }
