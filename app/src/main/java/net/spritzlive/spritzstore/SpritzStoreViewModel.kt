@@ -66,10 +66,23 @@ class SpritzStoreViewModel(application: Application) : AndroidViewModel(applicat
     fun install(row: AppRow) {
         val state = row.state as? AppUpdateState.UpdateAvailable ?: return
         viewModelScope.launch {
+            val storeApp = row.repo.storeApp
+            val ready = if (state.apkFile == null && storeApp != null) {
+                _rows.value = _rows.value.map { if (it.repo.slug == row.repo.slug) AppRow(row.repo, AppUpdateState.Downloading) else it }
+                withContext(Dispatchers.IO) { checker.fetchStoreApk(row.repo.applicationId, storeApp) }
+            } else {
+                state
+            }
+            val apkFile = (ready as? AppUpdateState.UpdateAvailable)?.apkFile
+            if (apkFile == null) {
+                _rows.value = _rows.value.map { if (it.repo.slug == row.repo.slug) AppRow(row.repo, ready) else it }
+                return@launch
+            }
+
             _rows.value = _rows.value.map { if (it.repo.slug == row.repo.slug) AppRow(row.repo, AppUpdateState.Installing) else it }
             val context = getApplication<Application>()
             withContext(Dispatchers.IO) {
-                runCatching { ApkInstaller.install(context, state.apkFile, row.repo.applicationId) }
+                runCatching { ApkInstaller.install(context, apkFile, row.repo.applicationId) }
             }
             // The real outcome (success/failure) arrives async via InstallResultReceiver
             // as a system notification -- re-check brings the list state back in sync

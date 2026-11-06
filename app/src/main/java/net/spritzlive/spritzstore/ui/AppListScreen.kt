@@ -105,6 +105,7 @@ private fun AppRowCard(row: AppRow, onInstall: () -> Unit, onRemove: () -> Unit)
                     is AppUpdateState.UpdateAvailable -> Button(onClick = onInstall) {
                         Text(if (state.isFirstInstall) "Install" else "Update")
                     }
+                    is AppUpdateState.Downloading -> Button(onClick = {}, enabled = false) { Text("Downloading...") }
                     is AppUpdateState.Installing -> Button(onClick = {}, enabled = false) { Text("Installing...") }
                     else -> {}
                 }
@@ -120,6 +121,7 @@ private fun statusText(state: AppUpdateState): String = when (state) {
     is AppUpdateState.UpdateAvailable ->
         if (state.isFirstInstall) "Not installed -- ${state.latestVersionName} available"
         else "${state.installedVersionName} -> ${state.latestVersionName}"
+    is AppUpdateState.Downloading -> "Downloading..."
     is AppUpdateState.Installing -> "Installing..."
     is AppUpdateState.Error -> "Error: ${state.message}"
 }

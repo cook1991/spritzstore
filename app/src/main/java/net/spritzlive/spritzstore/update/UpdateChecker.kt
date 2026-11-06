@@ -59,8 +59,9 @@ class UpdateChecker(
     }
 
     /**
-     * The manifest states each app's versionCode, so an app that's already current
-     * needs no download at all.
+     * The manifest states each app's versionCode, so checking downloads nothing: opening
+     * the app, or a background check, doesn't spend the phone's data on APKs nobody has
+     * asked for. [fetchStoreApk] gets the file once someone taps Install.
      */
     private suspend fun checkStoreApp(applicationId: String, storeApp: String): AppUpdateState {
         val installed = installedVersion(applicationId)
@@ -72,8 +73,28 @@ class UpdateChecker(
         val app = manifest.apps[storeApp]
             ?: return AppUpdateState.Error("$storeApp isn't in the store")
         if (installed != null && app.versionCode <= installed.second) {
+            context.cacheDir.listFiles { file -> file.name.startsWith("update-$storeApp-") }?.forEach { it.delete() }
             return AppUpdateState.UpToDate(installed.first, installed.second)
         }
+        return AppUpdateState.UpdateAvailable(
+            installedVersionName = installed?.first,
+            installedVersionCode = installed?.second ?: -1,
+            latestVersionName = app.versionName,
+            latestVersionCode = app.versionCode,
+            apkFile = null,
+        )
+    }
+
+    /** Downloads and verifies a store app's APK, ready to hand to the installer. */
+    suspend fun fetchStoreApk(applicationId: String, storeApp: String): AppUpdateState {
+        val installed = installedVersion(applicationId)
+        val manifest = try {
+            api.storeManifest()
+        } catch (e: Exception) {
+            return AppUpdateState.Error(e.message ?: "Couldn't reach the store")
+        }
+        val app = manifest.apps[storeApp]
+            ?: return AppUpdateState.Error("$storeApp isn't in the store")
 
         val apkFile = File(context.cacheDir, "update-$storeApp-${app.versionCode}.apk")
         if (!apkFile.exists() || apkFile.length() != app.size) {

@@ -77,9 +77,9 @@ This is what makes the app usable with no token. Anonymous calls to api.github.c
 limited to 60 an hour per IP address, and in testing on a home connection that allowance
 kept dropping to zero with SpritzStore idle, so others evidently share the address, as
 they routinely do on mobile networks. The manifest and plain github.com download links
-don't count against it, and the manifest's versionCode means a current app needs no
-download. The APK's own versionCode still makes the install decision when one is
-downloaded, and its checksum must match the manifest.
+don't count against it, and because the manifest states each version, checking downloads
+nothing -- the APK is fetched only when someone taps Install. The APK's own versionCode
+still makes the install decision then, and its checksum must match the manifest.
 
 Private repos still use the flow below, with a token.
 
