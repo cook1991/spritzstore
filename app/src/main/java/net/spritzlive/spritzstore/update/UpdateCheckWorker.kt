@@ -27,7 +27,7 @@ class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineW
                 Notifications.notifyUpdateAvailable(
                     applicationContext,
                     notificationId = repo.slug.hashCode(),
-                    appName = repo.repo,
+                    appName = repo.displayName,
                     latestVersionName = state.latestVersionName,
                 )
                 prefs.markNotified(repo.slug, state.latestVersionCode)

@@ -15,6 +15,20 @@ data class GitHubAsset(
     val id: Long,
     val name: String,
     val size: Long = 0,
+    @SerialName("browser_download_url") val downloadUrl: String? = null,
+)
+
+/** `store.json` on the store site -- `scripts/publish.py` in that repo maintains it. */
+@Serializable
+data class StoreManifest(val apps: Map<String, StoreApp>)
+
+@Serializable
+data class StoreApp(
+    val versionCode: Long,
+    val versionName: String,
+    val url: String,
+    val size: Long,
+    val sha256: String,
 )
 
 sealed class GitHubApiException(message: String) : Exception(message) {

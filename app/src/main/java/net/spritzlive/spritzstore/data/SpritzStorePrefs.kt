@@ -11,6 +11,7 @@ import kotlinx.serialization.json.Json
 import net.spritzlive.spritzstore.crypto.TokenKeystore
 import net.spritzlive.spritzstore.model.DEFAULT_TRACKED_REPOS
 import net.spritzlive.spritzstore.model.TrackedRepo
+import net.spritzlive.spritzstore.model.migrateToStore
 
 private val Context.dataStore by preferencesDataStore(name = "spritzstore_prefs")
 
@@ -32,7 +33,7 @@ class SpritzStorePrefs(private val context: Context) {
     suspend fun trackedRepos(): List<TrackedRepo> {
         val raw = context.dataStore.data.first()[Keys.TRACKED_REPOS_JSON]
             ?: return DEFAULT_TRACKED_REPOS
-        return runCatching { json.decodeFromString<List<TrackedRepo>>(raw) }
+        return runCatching { migrateToStore(json.decodeFromString<List<TrackedRepo>>(raw)) }
             .getOrDefault(DEFAULT_TRACKED_REPOS)
     }
 

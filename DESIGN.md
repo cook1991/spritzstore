@@ -65,6 +65,24 @@ rejected (401) — go generate a new one" state in the UI rather than failing si
 since a GitHub 401 and "no update available" look identical if you don't distinguish
 them.
 
+## The store manifest
+
+Added after this plan: the default apps publish to the public `cook1991.github.io`
+repo, which serves their download pages through GitHub Pages and holds their APKs as
+Releases tagged `<app>-v<version>`. Their source repos can stay private. `store.json`
+on that site gives each app's versionCode, versionName, download URL, size, and SHA-256,
+and a `TrackedRepo` with a `storeApp` reads that instead of following the flow below.
+
+This is what makes the app usable with no token. Anonymous calls to api.github.com are
+limited to 60 an hour per IP address, and in testing on a home connection that allowance
+kept dropping to zero with SpritzStore idle, so others evidently share the address, as
+they routinely do on mobile networks. The manifest and plain github.com download links
+don't count against it, and the manifest's versionCode means a current app needs no
+download. The APK's own versionCode still makes the install decision when one is
+downloaded, and its checksum must match the manifest.
+
+Private repos still use the flow below, with a token.
+
 ## Update check flow
 
 WorkManager periodic job (e.g. every 12h, `NetworkType.CONNECTED` constraint) — no GMS

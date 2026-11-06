@@ -77,11 +77,12 @@ class SpritzStoreViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun addRepo(owner: String, repo: String, applicationId: String) {
+    fun addRepo(owner: String, repo: String, applicationId: String, storeApp: String?) {
         viewModelScope.launch {
             val existing = prefs.trackedRepos()
-            if (existing.any { it.owner == owner && it.repo == repo }) return@launch
-            prefs.setTrackedRepos(existing + TrackedRepo(owner, repo, applicationId))
+            val added = TrackedRepo(owner, repo, applicationId, storeApp = storeApp)
+            if (existing.any { it.slug == added.slug }) return@launch
+            prefs.setTrackedRepos(existing + added)
             refresh()
         }
     }

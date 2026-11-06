@@ -7,6 +7,7 @@ import net.spritzlive.spritzstore.github.GitHubApiException
 import net.spritzlive.spritzstore.model.AppUpdateState
 import net.spritzlive.spritzstore.model.TrackedRepo
 import java.io.File
+import java.security.MessageDigest
 
 /**
  * Core update logic, shared by the manual "refresh" action and the periodic
@@ -19,6 +20,8 @@ class UpdateChecker(
 ) {
     /** [token] is optional -- null works fine for a public repo, see [GitHubApi]. */
     suspend fun check(repo: TrackedRepo, token: String?): AppUpdateState {
+        if (repo.storeApp != null) return checkStoreApp(repo.applicationId, repo.storeApp)
+
         val installed = installedVersion(repo.applicationId)
 
         val release = try {
@@ -44,7 +47,7 @@ class UpdateChecker(
         val apkFile = File(context.cacheDir, "update-${repo.repo}-${apkAsset.id}.apk")
         if (!apkFile.exists() || apkFile.length() != apkAsset.size) {
             try {
-                api.downloadAsset(repo.owner, repo.repo, apkAsset.id, token, apkFile)
+                api.downloadAsset(repo.owner, repo.repo, apkAsset, token, apkFile)
             } catch (e: GitHubApiException) {
                 return AppUpdateState.Error(e.message ?: "Download failed")
             } catch (e: Exception) {
@@ -52,9 +55,46 @@ class UpdateChecker(
             }
         }
 
+        return decide(apkFile, installed)
+    }
+
+    /**
+     * The manifest states each app's versionCode, so an app that's already current
+     * needs no download at all.
+     */
+    private suspend fun checkStoreApp(applicationId: String, storeApp: String): AppUpdateState {
+        val installed = installedVersion(applicationId)
+        val manifest = try {
+            api.storeManifest()
+        } catch (e: Exception) {
+            return AppUpdateState.Error(e.message ?: "Couldn't reach the store")
+        }
+        val app = manifest.apps[storeApp]
+            ?: return AppUpdateState.Error("$storeApp isn't in the store")
+        if (installed != null && app.versionCode <= installed.second) {
+            return AppUpdateState.UpToDate(installed.first, installed.second)
+        }
+
+        val apkFile = File(context.cacheDir, "update-$storeApp-${app.versionCode}.apk")
+        if (!apkFile.exists() || apkFile.length() != app.size) {
+            try {
+                api.downloadPublicFile(app.url, apkFile)
+            } catch (e: Exception) {
+                return AppUpdateState.Error(e.message ?: "Download failed")
+            }
+        }
+        if (sha256(apkFile) != app.sha256) {
+            apkFile.delete()
+            return AppUpdateState.Error("The download of $storeApp didn't match the store's checksum")
+        }
+        return decide(apkFile, installed)
+    }
+
+    private fun decide(apkFile: File, installed: Pair<String, Long>?): AppUpdateState {
         // The install decision is always made from the APK's own embedded
-        // versionCode, never the release tag -- a tagging mistake on the publishing
-        // side can then never cause a skipped update or a downgrade. See DESIGN.md.
+        // versionCode, never the release tag or the manifest -- a mistake on the
+        // publishing side can then never cause a skipped update or a downgrade. See
+        // DESIGN.md.
         val archiveInfo = archiveInfo(apkFile.path)
             ?: return AppUpdateState.Error("Couldn't read the downloaded APK's manifest")
         val latestVersionCode = archiveInfo.first
@@ -80,6 +120,19 @@ class UpdateChecker(
                 AppUpdateState.UpToDate(installed.first, installed.second)
             }
         }
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(64 * 1024)
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     @Suppress("DEPRECATION")

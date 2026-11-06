@@ -76,8 +76,8 @@ fun AppListScreen(viewModel: SpritzStoreViewModel, onOpenSettings: () -> Unit) {
     if (showAddDialog) {
         AddRepoDialog(
             onDismiss = { showAddDialog = false },
-            onAdd = { owner, repo, applicationId ->
-                viewModel.addRepo(owner, repo, applicationId)
+            onAdd = { owner, repo, applicationId, storeApp ->
+                viewModel.addRepo(owner, repo, applicationId, storeApp)
                 showAddDialog = false
             },
         )
@@ -88,7 +88,7 @@ fun AppListScreen(viewModel: SpritzStoreViewModel, onOpenSettings: () -> Unit) {
 private fun AppRowCard(row: AppRow, onInstall: () -> Unit, onRemove: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(row.repo.repo, style = MaterialTheme.typography.titleMedium)
+            Text(row.repo.displayName, style = MaterialTheme.typography.titleMedium)
             Text(row.repo.slug, style = MaterialTheme.typography.bodySmall)
 
             // Status text gets the full card width and wraps freely (error messages
@@ -125,10 +125,14 @@ private fun statusText(state: AppUpdateState): String = when (state) {
 }
 
 @Composable
-private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (owner: String, repo: String, applicationId: String) -> Unit) {
+private fun AddRepoDialog(
+    onDismiss: () -> Unit,
+    onAdd: (owner: String, repo: String, applicationId: String, storeApp: String?) -> Unit,
+) {
     var owner by remember { mutableStateOf("cook1991") }
     var repo by remember { mutableStateOf("") }
     var applicationId by remember { mutableStateOf("") }
+    var storeApp by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -142,11 +146,16 @@ private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (owner: String, repo: St
                     onValueChange = { applicationId = it },
                     label = { Text("applicationId (from its build.gradle.kts)") },
                 )
+                OutlinedTextField(
+                    value = storeApp,
+                    onValueChange = { storeApp = it },
+                    label = { Text("Store app (only for apps in store.json)") },
+                )
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { if (repo.isNotBlank() && applicationId.isNotBlank()) onAdd(owner, repo, applicationId) },
+                onClick = { if (repo.isNotBlank() && applicationId.isNotBlank()) onAdd(owner, repo, applicationId, storeApp.trim().ifBlank { null }) },
             ) { Text("Add") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
