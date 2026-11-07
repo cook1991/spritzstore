@@ -48,6 +48,7 @@ val DEFAULT_TRACKED_REPOS = listOf(
     storeApp("securemessenger", "net.spritzlive.securemessenger"),
     storeApp("policescanner", "net.inetvisions.policescanner"),
     storeApp("compass", "com.spritzlive.compass"),
+    storeApp("mobilebrowser", "net.spritzlive.mobilebrowser"),
 )
 
 /**
