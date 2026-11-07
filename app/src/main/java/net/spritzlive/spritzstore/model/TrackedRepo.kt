@@ -46,6 +46,8 @@ val DEFAULT_TRACKED_REPOS = listOf(
     storeApp("odotrack", "com.spritzlive.speedometer"),
     storeApp("identifysong", "net.spritzlive.identifysong"),
     storeApp("securemessenger", "net.spritzlive.securemessenger"),
+    storeApp("policescanner", "net.inetvisions.policescanner"),
+    storeApp("compass", "com.spritzlive.compass"),
 )
 
 /**
