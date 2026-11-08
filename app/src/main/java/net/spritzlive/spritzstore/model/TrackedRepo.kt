@@ -22,8 +22,23 @@ data class TrackedRepo(
     val storeApp: String? = null,
 ) {
     val slug: String get() = if (storeApp == null) "$owner/$repo" else "$owner/$repo#$storeApp"
-    val displayName: String get() = storeApp ?: repo
+    val displayName: String get() = STORE_APP_NAMES[storeApp] ?: storeApp ?: repo
 }
+
+/** What each store app is called on its page, shown instead of the manifest key. */
+val STORE_APP_NAMES = mapOf(
+    "spritzstore" to "SpritzStore",
+    "messages" to "Messages",
+    "authvault" to "AuthVault",
+    "drb" to "Douay-Rheims Bible",
+    "skycast" to "SkyCast",
+    "odotrack" to "OdoTrack",
+    "identifysong" to "Identify Song",
+    "securemessenger" to "Secure Messenger",
+    "policescanner" to "Police Scanner",
+    "compass" to "TrueNorth",
+    "mobilebrowser" to "Mobile Browser",
+)
 
 private fun storeApp(storeApp: String, applicationId: String) =
     TrackedRepo("cook1991", "cook1991.github.io", applicationId, storeApp = storeApp)

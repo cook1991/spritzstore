@@ -41,6 +41,7 @@ import net.spritzlive.spritzstore.model.AppUpdateState
 fun AppListScreen(viewModel: SpritzStoreViewModel, onOpenSettings: () -> Unit) {
     val rows by viewModel.rows.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var confirmRemove by remember { mutableStateOf<AppRow?>(null) }
 
     Scaffold(
         topBar = {
@@ -67,10 +68,26 @@ fun AppListScreen(viewModel: SpritzStoreViewModel, onOpenSettings: () -> Unit) {
                 AppRowCard(
                     row = row,
                     onInstall = { viewModel.install(row) },
-                    onRemove = { viewModel.removeRepo(row.repo.slug) },
+                    onRemove = { confirmRemove = row },
                 )
             }
         }
+    }
+
+    // Remove sits right beside Install/Update, so a stray tap mustn't drop an app from the list.
+    confirmRemove?.let { row ->
+        AlertDialog(
+            onDismissRequest = { confirmRemove = null },
+            title = { Text("Remove ${row.repo.displayName}?") },
+            text = { Text("It comes off this list and SpritzStore stops checking it for updates. The app itself stays installed.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.removeRepo(row.repo.slug)
+                    confirmRemove = null
+                }) { Text("Remove") }
+            },
+            dismissButton = { TextButton(onClick = { confirmRemove = null }) { Text("Cancel") } },
+        )
     }
 
     if (showAddDialog) {
